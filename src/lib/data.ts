@@ -138,56 +138,69 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
     {
       id: 1,
       type: "lesson",
-      mediaType: "image",
-      mediaSrc: "/assets/sign_page7_flat_hand.png",
-      title: "Letter A",
+      mediaType: "video",
+      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763110199/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/a_for_apple_j46210.mp4",
+      title: "Letter A for Apple",
       description:
-        "This is the sign for the letter 'A'. Make a fist with your thumb resting on the side of your hand.",
+        "To sign A for Apple: Make a fist with your thumb resting on the side of your hand. Place the thumb of the “A” hand on the cheek and twist back and forth.",
     },
     // Lesson 2
     {
       id: 2,
       type: "lesson",
-      mediaType: "image",
-      mediaSrc: "/assets/sign_page7_open_hand.png",
-      title: "Letter B",
+      mediaType: "video",
+      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763110324/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/b_for_banana_sjlxqk.mp4",
+      title: "Letter B for Banana",
       description:
-        "This is the sign for the letter 'B'. Hold your hand flat with fingers together and thumb across your palm.",
+        "To sign B for Banana: With your left index finger pointing up, use the right hand to make a peeling motion around it.",
     },
     // Lesson 3
     {
       id: 3,
       type: "lesson",
-      mediaType: "image",
-      mediaSrc: "/assets/sign_page7_curved_hand.png",
-      title: "Letter C",
+      mediaType: "video",
+      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763110198/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/c_for_coconut_bi81ca.mp4",
+      title: "Letter C for Coconut",
       description:
-        "This is the sign for the letter 'C'. Curve your fingers and thumb to form the shape of the letter C.",
+        "To sign C for Coconut: Place both curved hands at the ear with palms facing each other and shake back and forth.",
     },
     // Test 1
     {
       id: 4,
       type: "test",
       testType: "multiple-choice",
-      question: "Which letter does this hand shape represent?",
-      mediaType: "image",
-      mediaSrc: "/assets/sign_page7_curved_hand.png",
-      options: ["Letter A", "Letter B", "Letter C", "Letter D"],
-      correctAnswer: "Letter C",
+      question: "We learned that the letter 'B' is for a yummy yellow fruit. Which one is it?",
+      mediaType: "video",
+      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763019401/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/b_for_banana_vby1qz.mp4",
+      options: ["Apple", "Banana", "Coconut", "Dog"],
+      correctAnswer: "Banana",
     },
+
+    // Test 2 - Practical
+    {
+  id: 5,
+  type: "test",
+  testType: "practical",
+  signToPerform: "A for Apple",
+  instructions: "It's snack time! 🍎 Can you show the camera the sign for 'A for Apple'? Make a fist like you are holding a round, crunchy apple!",
+  hints: [
+    "Place the thumb of the “A” hand on the cheek and twist back and forth.",
+    "Hold your hand steady in front of the camera"
+  ],
+},
     // Lesson 4
     {
-      id: 5,
+      id: 6,
       type: "lesson",
       mediaType: "image",
-      mediaSrc: "/assets/sign_page7_bent_hand.png",
-      title: "Letter D",
+      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763019054/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/d_for_deaf_t2rrky.mp4",
+      title: "Letter D for Deaf",
       description:
-        "This is the sign for the letter 'D'. Point your index finger up while your thumb touches your middle, ring, and pinky fingers.",
+        "To sign D for Deaf: Place the index finger next to the mouth then move to the ear.",
     },
     // Lesson 5
     {
-      id: 6,
+      id: 7,
       type: "lesson",
       mediaType: "image",
       mediaSrc: "/assets/sign_page7_clawed_hand.png",
@@ -197,7 +210,7 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
     },
     // Lesson 6
     {
-      id: 7,
+      id: 8,
       type: "lesson",
       mediaType: "image",
       mediaSrc: "/assets/sign_page7_ily_hand.png",
@@ -207,7 +220,7 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
     },
     // Test 2 - Practical
     {
-      id: 8,
+      id: 9,
       type: "test",
       testType: "practical",
       signToPerform: "Letter B",
