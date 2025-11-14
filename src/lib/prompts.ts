@@ -158,30 +158,26 @@ The good examples are specific, use technical terminology, are encouraging, and 
 
   const finalRequest = `Evaluate the user's sign language attempt against the reference video using all the criteria above. Provide detailed, constructive feedback.`;
 
-  const outputFormatting = `Please structure your response in the following format:
+  const outputFormatting = `Please respond with valid JSON in the following format:
 
-<evaluation>
-  <overall_accuracy>
-    [A percentage from 0-100% representing overall accuracy]
-  </overall_accuracy>
-  
-  <strengths>
-    [Bullet points of what the user is doing well, be specific]
-  </strengths>
-  
-  <areas_for_improvement>
-    [Detailed, actionable feedback on what needs improvement]
-    [Include specific guidance for each aspect that needs work]
-  </areas_for_improvement>
-  
-  <critical_feedback>
-    [The most important 1-2 things the user should focus on first]
-  </critical_feedback>
-  
-  <encouragement>
-    [A brief, motivating message to encourage continued practice]
-  </encouragement>
-</evaluation>`;
+{
+  "accuracy_score": <number from 0-100>,
+  "hand_shape_detected": "<detected hand shape: ILY|Flat|AND|Clawed|Bent|Open|Curved|Other>",
+  "movement_pattern_detected": "<detected pattern: Single Direction|Opposite|Double Arrows|Waves|Curved|Circular|Accents|Double Pointed|Double Curved Lines|Other>",
+  "strengths": [
+    "<specific strength with technical terminology>"
+  ],
+  "improvements": [
+    {
+      "aspect": "<handshape|movement|location|orientation|facial_expression|stability|speed>",
+      "issue": "<what's wrong - be specific>",
+      "suggestion": "<how to fix it - use technical terms>",
+      "priority": "<critical|important|minor>"
+    }
+  ],
+  "critical_feedback": "<the 1-2 most important things to focus on first>",
+  "encouragement": "<motivating message>"
+}`;
 
   return createPrompt({
     taskContext,

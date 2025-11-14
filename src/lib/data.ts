@@ -10,6 +10,9 @@ export const categories = [
 
 export type CategoryName = (typeof categories)[number]["name"];
 
+export const ananseStory =
+  "https://res.cloudinary.com/techbiznez/video/upload/v1763104482/SIGNUM%20AI%20ASSETS/ananse-video_rjbhl2.mp4";
+
 // Lesson and test type definitions
 // Note: We use browser's speech synthesis instead of audio files for accessibility
 export interface Lesson {
@@ -17,6 +20,7 @@ export interface Lesson {
   type: "lesson";
   mediaType: "video" | "image";
   mediaSrc: string;
+  imageSrc?: string;
   title: string;
   description: string;
 }
@@ -39,6 +43,9 @@ export interface PracticalTest {
   signToPerform: string;
   instructions: string;
   hints: string[];
+  referenceVideoUrl: string;
+  signImages?: string[];
+  signDescription?: string;
 }
 
 export type LessonItem = Lesson | MultipleChoiceTest | PracticalTest;
@@ -125,6 +132,7 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       signToPerform: "Family",
       instructions:
         "Show the sign for 'Family' using your camera. Touch your thumb to your chin with your hand open.",
+      referenceVideoUrl: "",
       hints: [
         "Make sure your hand is clearly visible",
         "Touch your thumb to your chin area",
@@ -139,8 +147,11 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       id: 1,
       type: "lesson",
       mediaType: "video",
-      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763110199/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/a_for_apple_j46210.mp4",
+      mediaSrc:
+        "https://res.cloudinary.com/techbiznez/video/upload/v1763110199/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/a_for_apple_j46210.mp4",
       title: "Letter A for Apple",
+      imageSrc:
+        "https://res.cloudinary.com/techbiznez/image/upload/v1763104452/SIGNUM%20AI%20ASSETS/apple-image_i63d6b.jpg",
       description:
         "To sign A for Apple: Make a fist with your thumb resting on the side of your hand. Place the thumb of the “A” hand on the cheek and twist back and forth.",
     },
@@ -149,8 +160,11 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       id: 2,
       type: "lesson",
       mediaType: "video",
-      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763110324/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/b_for_banana_sjlxqk.mp4",
+      mediaSrc:
+        "https://res.cloudinary.com/techbiznez/video/upload/v1763110324/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/b_for_banana_sjlxqk.mp4",
       title: "Letter B for Banana",
+      imageSrc:
+        "https://res.cloudinary.com/techbiznez/image/upload/v1763104456/SIGNUM%20AI%20ASSETS/banana-image_piwo3z.jpg",
       description:
         "To sign B for Banana: With your left index finger pointing up, use the right hand to make a peeling motion around it.",
     },
@@ -159,7 +173,10 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       id: 3,
       type: "lesson",
       mediaType: "video",
-      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763110198/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/c_for_coconut_bi81ca.mp4",
+      mediaSrc:
+        "https://res.cloudinary.com/techbiznez/video/upload/v1763110198/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/c_for_coconut_bi81ca.mp4",
+      imageSrc:
+        "https://res.cloudinary.com/techbiznez/image/upload/v1763104462/SIGNUM%20AI%20ASSETS/coconut-image_gjlpta.jpg",
       title: "Letter C for Coconut",
       description:
         "To sign C for Coconut: Place both curved hands at the ear with palms facing each other and shake back and forth.",
@@ -169,67 +186,35 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       id: 4,
       type: "test",
       testType: "multiple-choice",
-      question: "We learned that the letter 'B' is for a yummy yellow fruit. Which one is it?",
+      question:
+        "We learned that the letter 'B' is for a yummy yellow fruit. Which one is it?",
       mediaType: "video",
-      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763019401/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/b_for_banana_vby1qz.mp4",
+      mediaSrc:
+        "https://res.cloudinary.com/techbiznez/video/upload/v1763019401/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/b_for_banana_vby1qz.mp4",
       options: ["Apple", "Banana", "Coconut", "Dog"],
       correctAnswer: "Banana",
     },
 
     // Test 2 - Practical
     {
-  id: 5,
-  type: "test",
-  testType: "practical",
-  signToPerform: "A for Apple",
-  instructions: "It's snack time! 🍎 Can you show the camera the sign for 'A for Apple'? Make a fist like you are holding a round, crunchy apple!",
-  hints: [
-    "Place the thumb of the “A” hand on the cheek and twist back and forth.",
-    "Hold your hand steady in front of the camera"
-  ],
-},
-    // Lesson 4
-    {
-      id: 6,
-      type: "lesson",
-      mediaType: "image",
-      mediaSrc: "https://res.cloudinary.com/techbiznez/video/upload/v1763019054/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/d_for_deaf_t2rrky.mp4",
-      title: "Letter D for Deaf",
-      description:
-        "To sign D for Deaf: Place the index finger next to the mouth then move to the ear.",
-    },
-    // Lesson 5
-    {
-      id: 7,
-      type: "lesson",
-      mediaType: "image",
-      mediaSrc: "/assets/sign_page7_clawed_hand.png",
-      title: "Letter E",
-      description:
-        "This is the sign for the letter 'E'. Curl your fingers down with your thumb tucked under them.",
-    },
-    // Lesson 6
-    {
-      id: 8,
-      type: "lesson",
-      mediaType: "image",
-      mediaSrc: "/assets/sign_page7_ily_hand.png",
-      title: "Letter F",
-      description:
-        "This is the sign for the letter 'F'. Touch your thumb and index finger together while keeping other fingers up.",
-    },
-    // Test 2 - Practical
-    {
-      id: 9,
+      id: 5,
       type: "test",
       testType: "practical",
-      signToPerform: "Letter B",
+      signToPerform: "A for Apple",
       instructions:
-        "Show the sign for the letter 'B' using your camera. Hold your hand flat with fingers together.",
+        "It's snack time! 🍎 Can you show the camera the sign for 'A for Apple'? Make a fist like you are holding a round, crunchy apple!",
+      referenceVideoUrl:
+        "https://res.cloudinary.com/techbiznez/video/upload/v1763110199/Unicef%20Hackathon%20Videos/Alphabets%20and%20Their%20associations/a_for_apple_j46210.mp4",
+
+      signImages: [
+        "https://res.cloudinary.com/techbiznez/image/upload/v1763026857/Unicef%20Hackathon%20Videos/Alphabets/A_vc4a2d.png",
+        "https://res.cloudinary.com/techbiznez/image/upload/v1763120277/Unicef%20Hackathon%20Videos/Alphabets/Screenshot_2025-11-14_at_11.33.57_e4kvqa.png",
+      ],
+      signDescription:
+        "Place the thumb of the “A” hand on the cheek and twist back and forth.",
       hints: [
-        "Keep your fingers straight and together",
-        "Place your thumb across your palm",
-        "Make sure your hand is clearly visible to the camera",
+        "Place the thumb of the “A” hand on the cheek and twist back and forth.",
+        "Hold your hand steady in front of the camera",
       ],
     },
   ],
@@ -314,6 +299,7 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       signToPerform: "Number 3",
       instructions:
         "Show the sign for number '3' using your camera. Hold up three fingers clearly.",
+      referenceVideoUrl: "",
       hints: [
         "Hold up your thumb, index, and middle fingers",
         "Keep other fingers closed",
@@ -402,6 +388,7 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       signToPerform: "Blue",
       instructions:
         "Show the sign for 'Blue' using your camera. Make the letter 'B' and twist your hand.",
+      referenceVideoUrl: "",
       hints: [
         "Form the letter 'B' hand shape first",
         "Twist your wrist back and forth",
@@ -490,6 +477,7 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       signToPerform: "Bird",
       instructions:
         "Show the sign for 'Bird' using your camera. Make a beak shape near your mouth.",
+      referenceVideoUrl: "",
       hints: [
         "Use your index finger and thumb to form a beak",
         "Position near your mouth",
@@ -576,6 +564,7 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       type: "test",
       testType: "practical",
       signToPerform: "Apple",
+      referenceVideoUrl: "",
       instructions:
         "Show the sign for 'Apple' using your camera. Make an 'A' fist and twist it against your cheek.",
       hints: [

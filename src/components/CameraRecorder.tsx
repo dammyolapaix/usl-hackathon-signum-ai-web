@@ -7,14 +7,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Video, VideoOff, CheckCircle, XCircle } from "lucide-react";
 import {
   evaluateSignAction,
-  uploadVideoToCloudinary,
-  type UploadState,
+  type EvaluationResult as AIEvaluationResult,
 } from "@/lib/actions";
 
 interface CameraRecorderProps {
   signToPerform: string;
   instructions: string;
   hints: string[];
+  referenceVideoUrl: string;
+  signImages?: string[];
+  signDescription?: string;
   onPass: () => void;
   onSkip: () => void;
 }
@@ -29,25 +31,24 @@ type RecordingState =
   | "evaluating"
   | "result";
 
-interface EvaluationResult {
-  passed: boolean;
-  feedback: string;
-  hint?: string;
-}
-
 export default function CameraRecorder({
   signToPerform,
   instructions,
   hints,
+  referenceVideoUrl,
+  signImages,
+  signDescription,
   onPass,
   onSkip,
 }: CameraRecorderProps) {
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [evaluationResult, setEvaluationResult] =
-    useState<EvaluationResult | null>(null);
+    useState<AIEvaluationResult | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [countdownValue, setCountdownValue] = useState(3);
+  const [uploadProgress, setUploadProgress] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -57,11 +58,7 @@ export default function CameraRecorder({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // useActionState for upload and evaluation
-  const [uploadState, uploadAction, isUploading] = useActionState(
-    uploadVideoToCloudinary,
-    null
-  );
+  // useActionState for evaluation only
   const [actionState, formAction, isPending] = useActionState(
     evaluateSignAction,
     null
@@ -93,10 +90,10 @@ export default function CameraRecorder({
 
   // Start countdown before recording
   const startCountdown = () => {
-    setCountdownValue(5);
+    setCountdownValue(3);
     setRecordingState("countdown");
 
-    let count = 5;
+    let count = 3;
     countdownTimerRef.current = setInterval(() => {
       count -= 1;
       setCountdownValue(count);
@@ -184,19 +181,47 @@ export default function CameraRecorder({
     }
   };
 
-  // Convert blob to base64
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        // Remove data URL prefix (e.g., "data:video/webm;base64,")
-        const base64Data = base64.split(",")[1];
-        resolve(base64Data);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+  // Upload video to Cloudinary via API route
+  const uploadToCloudinary = async (blob: Blob): Promise<string> => {
+    setUploadProgress("Evaluating your sign...");
+
+    const formData = new FormData();
+    formData.append("video", blob, "recording.webm");
+
+    // Create an AbortController for timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 240000); // 4 minute timeout
+
+    try {
+      const response = await fetch("/api/upload-video", {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          error: "Failed to upload video",
+        }));
+        throw new Error(error.error || "Failed to upload video");
+      }
+
+      const data = await response.json();
+      console.log("✅ Video uploaded via API:");
+      console.log(`   URL: ${data.url}`);
+
+      return data.url;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError") {
+        throw new Error(
+          "Upload timed out. Please check your internet connection and try again."
+        );
+      }
+      throw error;
+    }
   };
 
   // Submit recording for evaluation
@@ -204,146 +229,79 @@ export default function CameraRecorder({
     if (!recordedBlobRef.current) return;
 
     setRecordingState("evaluating");
+    setErrorMessage("");
 
     try {
-      // Convert video blob to base64
-      const videoBase64 = await blobToBase64(recordedBlobRef.current);
+      // Log video size
+      const sizeInBytes = recordedBlobRef.current.size;
+      const sizeInKB = (sizeInBytes / 1024).toFixed(2);
+      const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
 
-      // Log base64 size
-      const base64SizeInBytes = videoBase64.length;
-      const base64SizeInKB = (base64SizeInBytes / 1024).toFixed(2);
-      const base64SizeInMB = (base64SizeInBytes / (1024 * 1024)).toFixed(2);
+      console.log("📹 Video Recording Complete:");
+      console.log(`   Size: ${sizeInBytes} bytes`);
+      console.log(`   Size: ${sizeInKB} KB`);
+      console.log(`   Size: ${sizeInMB} MB`);
 
-      console.log("📊 Base64 Conversion Complete:");
-      console.log(`   Base64 String Length: ${base64SizeInBytes} characters`);
-      console.log(`   Approximate Size: ${base64SizeInKB} KB`);
-      console.log(`   Approximate Size: ${base64SizeInMB} MB`);
-
-      // Step 1: Upload to Cloudinary
+      // Step 1: Upload to Cloudinary via API route
       console.log("📤 Step 1: Uploading to Cloudinary...");
-      const uploadFormData = new FormData();
-      uploadFormData.append("videoBase64", videoBase64);
-
-      // Upload and wait for result via uploadState
-      uploadAction(uploadFormData);
-    } catch (error) {
-      console.error("Error evaluating sign:", error);
-      // Fallback to simulated evaluation
-      const passed = Math.random() < 0.7;
-      const randomHint = hints[Math.floor(Math.random() * hints.length)];
-
-      setEvaluationResult({
-        passed,
-        feedback: passed
-          ? `Excellent work! Your sign for "${signToPerform}" is accurate.`
-          : `Not quite right. Let's try again!`,
-        hint: passed ? undefined : randomHint,
-      });
-
-      setRecordingState("result");
-    }
-  };
-
-  // Handle upload completion and trigger evaluation
-  useEffect(() => {
-    if (
-      uploadState &&
-      "success" in uploadState &&
-      uploadState.success &&
-      recordingState === "evaluating"
-    ) {
-      console.log("✅ Upload complete, starting evaluation...");
+      const videoUrl = await uploadToCloudinary(recordedBlobRef.current);
 
       // Step 2: Send URL to AI for evaluation
+      console.log("🚀 Step 2: Sending to AI for evaluation...");
+
       const evaluationFormData = new FormData();
-      evaluationFormData.append("videoUrl", uploadState.url);
+      evaluationFormData.append("videoUrl", videoUrl);
       evaluationFormData.append(
         "signDescription",
-        `${signToPerform}: ${instructions}`
+        signDescription || `${signToPerform}: ${instructions}`
       );
+      evaluationFormData.append("referenceVideoUrl", referenceVideoUrl);
 
-      console.log("🚀 Sending to AI for evaluation...");
+      // Add signImages if available
+      if (signImages && signImages.length > 0) {
+        evaluationFormData.append("signImages", JSON.stringify(signImages));
+      }
+
       formAction(evaluationFormData);
-    } else if (uploadState && "error" in uploadState && uploadState.error) {
-      console.error("❌ Upload failed:", uploadState.error);
-      // Fallback to simulated evaluation
-      const passed = Math.random() < 0.7;
-      const randomHint = hints[Math.floor(Math.random() * hints.length)];
-
-      setEvaluationResult({
-        passed,
-        feedback: passed
-          ? `Excellent work! Your sign for "${signToPerform}" is accurate.`
-          : `Not quite right. Let's try again!`,
-        hint: passed ? undefined : randomHint,
-      });
-
-      setRecordingState("result");
+    } catch (error: any) {
+      console.error("Error uploading or evaluating sign:", error);
+      const errorMsg =
+        error?.message ||
+        "Failed to upload or evaluate video. Please try again.";
+      setErrorMessage(errorMsg);
+      setUploadProgress("");
+      setRecordingState("recorded"); // Go back to recorded state so user can retry
     }
-  }, [
-    uploadState,
-    recordingState,
-    signToPerform,
-    instructions,
-    formAction,
-    hints,
-  ]);
+  };
 
   // Process action result when it changes
   useEffect(() => {
     if (actionState && recordingState === "evaluating") {
-      console.log("✅ AI Evaluation Received:");
-      console.log(
-        `   Response: ${actionState.substring(0, 100)}${
-          actionState.length > 100 ? "..." : ""
-        }`
-      );
-      console.log(`   Full length: ${actionState.length} characters`);
+      console.log("✅ AI Evaluation Received:", actionState);
 
-      // Parse the AI response
-      const positiveWords = [
-        "correct",
-        "great",
-        "excellent",
-        "good",
-        "accurate",
-        "right",
-        "perfect",
-      ];
-      const negativeWords = [
-        "incorrect",
-        "wrong",
-        "try again",
-        "not quite",
-        "needs improvement",
-      ];
+      // Check if it's an error
+      if ("error" in actionState) {
+        console.error("❌ Evaluation error:", actionState.error);
+        setRecordingState("result");
+        return;
+      }
 
-      const resultText = actionState.toLowerCase();
-      const hasPositive = positiveWords.some((word) =>
-        resultText.includes(word)
-      );
-      const hasNegative = negativeWords.some((word) =>
-        resultText.includes(word)
-      );
+      // It's a successful evaluation result
+      const evaluation = actionState as AIEvaluationResult;
+      console.log(`   Accuracy: ${evaluation.accuracy_score}%`);
+      console.log(`   Hand Shape: ${evaluation.hand_shape_detected}`);
+      console.log(`   Movement: ${evaluation.movement_pattern_detected}`);
 
-      const passed = hasPositive && !hasNegative;
-      const randomHint = hints[Math.floor(Math.random() * hints.length)];
-
-      console.log(`   Evaluation: ${passed ? "✅ PASSED" : "❌ FAILED"}`);
-
-      setEvaluationResult({
-        passed,
-        feedback: actionState,
-        hint: passed ? undefined : randomHint,
-      });
-
+      setEvaluationResult(evaluation);
       setRecordingState("result");
     }
-  }, [actionState, recordingState, hints]);
+  }, [actionState, recordingState]);
 
   // Try again
   const tryAgain = () => {
     setEvaluationResult(null);
+    setErrorMessage("");
+    setUploadProgress("");
     setRecordingState("ready");
     setRecordingTime(0);
   };
@@ -405,14 +363,6 @@ export default function CameraRecorder({
               <p className="text-xl md:text-2xl text-gray-700 mb-4 leading-relaxed">
                 {instructions}
               </p>
-              {evaluationResult?.hint && (
-                <Alert className="bg-[#FFD93D]/20 border-4 border-[#FFD93D] mt-4">
-                  <AlertDescription className="text-[#2D3748] text-lg md:text-xl">
-                    <strong className="font-bold">💡 Hint:</strong>{" "}
-                    {evaluationResult.hint}
-                  </AlertDescription>
-                </Alert>
-              )}
             </div>
           </div>
         </CardContent>
@@ -450,7 +400,7 @@ export default function CameraRecorder({
                   <div className="absolute top-6 right-6 flex items-center gap-3 bg-red-500 text-white px-6 py-3 rounded-full animate-pulse shadow-lg">
                     <div className="w-5 h-5 bg-white rounded-full" />
                     <span className="font-bold text-xl font-[family-name:var(--font-fredoka)]">
-                      {formatTime(recordingTime)} / 3s
+                      {formatTime(recordingTime)} / 5s
                     </span>
                   </div>
                 )}
@@ -471,28 +421,159 @@ export default function CameraRecorder({
         </Alert>
       )}
 
-      {/* Evaluation Result */}
-      {recordingState === "result" && evaluationResult && (
-        <Alert
-          className={
-            evaluationResult.passed
-              ? "bg-[#6BCF7F]/20 border-4 border-[#6BCF7F] p-8"
-              : "bg-[#FFD93D]/20 border-4 border-[#FFD93D] p-8"
-          }
-        >
-          {evaluationResult.passed ? (
-            <CheckCircle className="h-12 w-12 text-[#6BCF7F]" />
-          ) : (
-            <XCircle className="h-12 w-12 text-[#FFD93D]" />
-          )}
-          <AlertDescription
-            className={`${
-              evaluationResult.passed ? "text-[#2D3748]" : "text-[#2D3748]"
-            } text-2xl md:text-3xl font-semibold ml-4`}
-          >
-            {evaluationResult.feedback}
+      {/* Error Message Alert */}
+      {errorMessage && (
+        <Alert className="bg-red-50 border-4 border-red-400 p-6">
+          <XCircle className="h-10 w-10 text-red-600" />
+          <AlertDescription className="text-red-900 text-xl md:text-2xl ml-4">
+            {errorMessage}
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Detailed Evaluation Result */}
+      {recordingState === "result" && evaluationResult && (
+        <div className="space-y-6">
+          {/* Accuracy Score Card */}
+          <Card
+            className={`border-4 ${
+              evaluationResult.accuracy_score >= 80
+                ? "border-[#6BCF7F] bg-[#6BCF7F]/10"
+                : evaluationResult.accuracy_score >= 60
+                ? "border-[#FFD93D] bg-[#FFD93D]/10"
+                : "border-[#FF7B9C] bg-[#FF7B9C]/10"
+            }`}
+          >
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  {evaluationResult.accuracy_score >= 80 ? (
+                    <CheckCircle className="h-16 w-16 text-[#6BCF7F]" />
+                  ) : evaluationResult.accuracy_score >= 60 ? (
+                    <span className="text-6xl">👍</span>
+                  ) : (
+                    <span className="text-6xl">💪</span>
+                  )}
+                  <div>
+                    <h4 className="text-3xl md:text-4xl font-bold text-[#2D3748] font-[family-name:var(--font-fredoka)]">
+                      Accuracy Score
+                    </h4>
+                    <p className="text-5xl md:text-6xl font-bold text-[#2D3748] mt-2">
+                      {evaluationResult.accuracy_score}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detected Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-white/80 rounded-2xl p-4 border-2 border-[#58C4F6]">
+                  <p className="text-lg font-semibold text-gray-600 mb-1">
+                    Hand Shape Detected
+                  </p>
+                  <p className="text-2xl font-bold text-[#2D3748]">
+                    {evaluationResult.hand_shape_detected}
+                  </p>
+                </div>
+                <div className="bg-white/80 rounded-2xl p-4 border-2 border-[#B794F6]">
+                  <p className="text-lg font-semibold text-gray-600 mb-1">
+                    Movement Pattern
+                  </p>
+                  <p className="text-2xl font-bold text-[#2D3748]">
+                    {evaluationResult.movement_pattern_detected}
+                  </p>
+                </div>
+              </div>
+
+              {/* Critical Feedback */}
+              <Alert className="bg-[#58C4F6]/20 border-3 border-[#58C4F6] mb-4">
+                <AlertDescription className="text-[#2D3748] text-xl md:text-2xl font-semibold">
+                  <strong className="font-bold">🎯 Focus On:</strong>{" "}
+                  {evaluationResult.critical_feedback}
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+
+          {/* Strengths */}
+          {evaluationResult.strengths.length > 0 && (
+            <Card className="border-4 border-[#6BCF7F] bg-[#6BCF7F]/10">
+              <CardContent className="p-8">
+                <h4 className="text-3xl font-bold text-[#2D3748] mb-4 font-[family-name:var(--font-fredoka)] flex items-center gap-3">
+                  <span className="text-4xl">⭐</span> What You Did Great!
+                </h4>
+                <ul className="space-y-3">
+                  {evaluationResult.strengths.map((strength, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 text-xl md:text-2xl text-[#2D3748]"
+                    >
+                      <span className="text-2xl">✅</span>
+                      <span>{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Improvements */}
+          {evaluationResult.improvements.length > 0 && (
+            <Card className="border-4 border-[#FFD93D] bg-[#FFD93D]/10">
+              <CardContent className="p-8">
+                <h4 className="text-3xl font-bold text-[#2D3748] mb-4 font-[family-name:var(--font-fredoka)] flex items-center gap-3">
+                  <span className="text-4xl">💡</span> Ways to Improve
+                </h4>
+                <div className="space-y-4">
+                  {evaluationResult.improvements.map((improvement, index) => {
+                    const priorityColors = {
+                      critical: "bg-[#FF7B9C] border-[#FF7B9C]",
+                      important: "bg-[#FFD93D] border-[#FFD93D]",
+                      minor: "bg-[#B794F6] border-[#B794F6]",
+                    };
+                    const priorityEmoji = {
+                      critical: "🔴",
+                      important: "🟡",
+                      minor: "🔵",
+                    };
+
+                    return (
+                      <div
+                        key={index}
+                        className={`p-6 rounded-2xl border-3 ${
+                          priorityColors[improvement.priority]
+                        }/20 border-${priorityColors[improvement.priority]}`}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-2xl">
+                            {priorityEmoji[improvement.priority]}
+                          </span>
+                          <p className="text-xl font-bold text-[#2D3748] capitalize">
+                            {improvement.aspect.replace("_", " ")}
+                          </p>
+                        </div>
+                        <p className="text-lg md:text-xl text-gray-700 mb-2">
+                          <strong>Issue:</strong> {improvement.issue}
+                        </p>
+                        <p className="text-lg md:text-xl text-[#2D3748]">
+                          <strong>How to Fix:</strong> {improvement.suggestion}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Encouragement */}
+          <Alert className="bg-gradient-to-r from-[#58C4F6]/20 to-[#B794F6]/20 border-4 border-[#58C4F6] p-8">
+            <AlertDescription className="text-[#2D3748] text-2xl md:text-3xl font-semibold text-center">
+              <span className="text-4xl mr-3">🌟</span>
+              {evaluationResult.encouragement}
+            </AlertDescription>
+          </Alert>
+        </div>
       )}
 
       {/* Control Buttons */}
@@ -521,16 +602,13 @@ export default function CameraRecorder({
 
         {(recordingState === "requesting-permission" ||
           recordingState === "evaluating" ||
-          isUploading ||
           isPending) && (
           <div className="flex items-center gap-4 text-[#2D3748] bg-white px-8 py-6 rounded-full shadow-lg">
             <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-[#58C4F6]" />
             <span className="text-2xl font-semibold font-[family-name:var(--font-fredoka)]">
               {recordingState === "requesting-permission"
                 ? "Requesting camera... 📸"
-                : isUploading
-                ? "Uploading video... ☁️"
-                : "Evaluating... 🤖"}
+                : uploadProgress || "Processing... 🤖"}
             </span>
           </div>
         )}
@@ -563,7 +641,7 @@ export default function CameraRecorder({
             <span className="text-2xl font-bold font-[family-name:var(--font-fredoka)]">
               {recordingState === "countdown"
                 ? `Get ready... ${countdownValue} 🎬`
-                : `Recording... ${formatTime(recordingTime)}s / 3s ⏺️`}
+                : `Recording... ${formatTime(recordingTime)}s / 5s ⏺️`}
             </span>
           </div>
         )}
@@ -591,7 +669,7 @@ export default function CameraRecorder({
 
         {recordingState === "result" && evaluationResult && (
           <>
-            {evaluationResult.passed ? (
+            {evaluationResult.accuracy_score >= 70 ? (
               <Button
                 onClick={handlePass}
                 size="xl"

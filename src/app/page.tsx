@@ -160,8 +160,20 @@ export default function Home() {
           })}
         </div>
 
-        {/* Practice Link */}
-        <div className="mt-16 text-center">
+        {/* Action Links */}
+        <div className="mt-16 flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <Link
+            href="/story"
+            onClick={() => announceButton("Ananse Story", "click")}
+            onMouseEnter={() => announceButton("Ananse Story", "hover")}
+            onFocus={() => announceButton("Ananse Story", "focus")}
+            className="inline-block px-12 py-5 bg-gradient-to-r from-[#B794F6] to-[#58C4F6] text-white font-bold text-2xl rounded-full hover:shadow-2xl transition-all shadow-xl transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-[#B794F6]/50"
+            aria-label="Watch Ananse Story. Button."
+            role="button"
+          >
+            📖 Ananse Story
+          </Link>
+          
           <Link
             href="/practise"
             onClick={() => announceButton("Quick Practice", "click")}

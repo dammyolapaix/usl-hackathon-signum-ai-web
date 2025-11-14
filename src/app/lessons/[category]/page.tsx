@@ -65,12 +65,20 @@ export default function LessonPage() {
     const testCount = lessons.filter((item) => item.type === "test").length;
     setTotalTests(testCount);
 
+    // Announce intro for screen readers
+    const announceTimer = setTimeout(() => {
+      speakText(`Welcome to ${categoryName} lessons! Get ready to learn!`);
+    }, 500);
+
     // Start with intro
     const timer = setTimeout(() => {
       setDisplayMode(getDisplayModeForItem(currentItem));
     }, 3000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(announceTimer);
+      clearTimeout(timer);
+    };
   }, [categoryName]);
 
   // Determine display mode based on lesson item
@@ -129,7 +137,11 @@ export default function LessonPage() {
       speakText("Excellent! You got it right!", undefined, "high");
     } else {
       // Announce encouragement and correct answer for screen readers
-      speakText(`Keep going! The correct answer was ${testItem.correctAnswer}`, undefined, "high");
+      speakText(
+        `Keep going! The correct answer was ${testItem.correctAnswer}`,
+        undefined,
+        "high"
+      );
     }
 
     // Save test score
@@ -150,7 +162,11 @@ export default function LessonPage() {
         setDisplayMode(getDisplayModeForItem(lessons[currentIndex + 1]));
       } else {
         setDisplayMode("completed");
-        speakText(`Amazing work! You completed ${categoryName}`, undefined, "high");
+        speakText(
+          `Amazing work! You completed ${categoryName}`,
+          undefined,
+          "high"
+        );
       }
     }, 3000);
   };
@@ -224,7 +240,11 @@ export default function LessonPage() {
 
   // Announce content for screen readers when lesson changes
   useEffect(() => {
-    if (displayMode === "lesson" && currentItem && currentItem.type === "lesson") {
+    if (
+      displayMode === "lesson" &&
+      currentItem &&
+      currentItem.type === "lesson"
+    ) {
       const lessonItem = currentItem as Lesson;
       speakText(`Lesson: ${lessonItem.title}. ${lessonItem.description}`);
     } else if (displayMode === "multiple-choice-test" && currentItem) {
@@ -232,7 +252,9 @@ export default function LessonPage() {
       speakText(`Quiz question: ${testItem.question}`);
     } else if (displayMode === "practical-test" && currentItem) {
       const testItem = currentItem as PracticalTest;
-      speakText(`Practical test: ${testItem.signToPerform}. ${testItem.instructions}`);
+      speakText(
+        `Practical test: ${testItem.signToPerform}. ${testItem.instructions}`
+      );
     }
   }, [displayMode, currentIndex]);
 
@@ -243,7 +265,9 @@ export default function LessonPage() {
         <div className="fixed inset-0 bg-gradient-to-br from-[#58C4F6] via-[#B794F6] to-[#FF7B9C] flex items-center justify-center z-50 animate-fade-in">
           <div className="text-center px-4">
             <div className="animate-bounce-in mb-8">
-              <div className="text-[12rem] md:text-[15rem] drop-shadow-2xl">{categoryInfo?.emoji}</div>
+              <div className="text-[12rem] md:text-[15rem] drop-shadow-2xl">
+                {categoryInfo?.emoji}
+              </div>
             </div>
             <h1 className="text-6xl md:text-8xl font-bold text-white mb-6 animate-slide-up font-[family-name:var(--font-fredoka)] drop-shadow-lg">
               {categoryName}
@@ -309,52 +333,133 @@ export default function LessonPage() {
           <div className="w-full max-w-4xl">
             {/* Lesson Display */}
             {displayMode === "lesson" && (
-              <div className="space-y-8 animate-fade-in" role="article" aria-live="polite">
+              <div
+                className="space-y-8 animate-fade-in"
+                role="article"
+                aria-live="polite"
+              >
                 <Card className="bg-white rounded-[2.5rem] shadow-2xl border-4 border-[#58C4F6]">
                   <CardContent className="p-10 md:p-12">
                     {/* Media container */}
                     <div className="flex flex-col items-center justify-center mb-8">
-                      {(currentItem as Lesson).mediaType === "video" ? (
-                        <video
-                          key={(currentItem as Lesson).mediaSrc}
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                          className="w-full max-w-2xl h-80 md:h-96 object-contain rounded-3xl bg-gradient-to-br from-[#E3F2FD] to-[#F3E5F5] shadow-xl border-4 border-[#B794F6]"
-                          aria-label={`Video demonstration of ${(currentItem as Lesson).title}`}
-                        >
-                          <source
-                            src={(currentItem as Lesson).mediaSrc}
-                            type="video/mp4"
-                          />
-                        </video>
+                      {(currentItem as Lesson).imageSrc ? (
+                        // Show both video and image when imageSrc is present
+                        <div className="w-full space-y-6">
+                          {/* Video Demonstration - Show First */}
+                          <div className="flex flex-col items-center">
+                            <h3 className="text-2xl md:text-3xl font-bold text-[#2D3748] mb-4 text-center font-[family-name:var(--font-fredoka)]">
+                              🎬 Video Demonstration
+                            </h3>
+                            {(currentItem as Lesson).mediaType === "video" ? (
+                              <video
+                                key={(currentItem as Lesson).mediaSrc}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                className="w-full max-w-2xl h-80 md:h-96 object-contain rounded-3xl bg-gradient-to-br from-[#E3F2FD] to-[#F3E5F5] shadow-xl border-4 border-[#B794F6]"
+                                aria-label={`Video demonstration of ${
+                                  (currentItem as Lesson).title
+                                }`}
+                              >
+                                <source
+                                  src={(currentItem as Lesson).mediaSrc}
+                                  type="video/mp4"
+                                />
+                              </video>
+                            ) : (
+                              <div className="relative w-full max-w-2xl h-80 md:h-96 flex items-center justify-center bg-gradient-to-br from-[#E3F2FD] to-[#F3E5F5] rounded-3xl shadow-xl border-4 border-[#B794F6]">
+                                <Image
+                                  src={(currentItem as Lesson).mediaSrc}
+                                  alt={`Video demonstration for ${
+                                    (currentItem as Lesson).title
+                                  }`}
+                                  width={600}
+                                  height={450}
+                                  className="object-contain"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Sign Image Reference - Show Below, Smaller */}
+                          <div className="flex flex-col items-center">
+                            <h3 className="text-xl md:text-2xl font-bold text-[#2D3748] mb-3 text-center font-[family-name:var(--font-fredoka)]">
+                              📸 Sign Reference
+                            </h3>
+                            <div className="relative w-full max-w-lg h-48 md:h-64 flex items-center justify-center bg-gradient-to-br from-[#FFF9E6] to-[#FFE8CC] rounded-2xl shadow-lg border-3 border-[#FFD93D]">
+                              <Image
+                                src={(currentItem as Lesson).imageSrc!}
+                                alt={`Sign reference image for ${
+                                  (currentItem as Lesson).title
+                                }`}
+                                width={400}
+                                height={300}
+                                className="object-contain"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (currentItem as Lesson).mediaSrc ? (
+                        // Show only mediaSrc when imageSrc is not present (original behavior)
+                        (currentItem as Lesson).mediaType === "video" ? (
+                          <video
+                            key={(currentItem as Lesson).mediaSrc}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full max-w-2xl h-80 md:h-96 object-contain rounded-3xl bg-gradient-to-br from-[#E3F2FD] to-[#F3E5F5] shadow-xl border-4 border-[#B794F6]"
+                            aria-label={`Video demonstration of ${
+                              (currentItem as Lesson).title
+                            }`}
+                          >
+                            <source
+                              src={(currentItem as Lesson).mediaSrc}
+                              type="video/mp4"
+                            />
+                          </video>
+                        ) : (
+                          <div className="relative w-full max-w-2xl h-80 md:h-96 flex items-center justify-center bg-gradient-to-br from-[#E3F2FD] to-[#F3E5F5] rounded-3xl shadow-xl border-4 border-[#B794F6]">
+                            <Image
+                              src={(currentItem as Lesson).mediaSrc}
+                              alt={`Sign language demonstration for ${
+                                (currentItem as Lesson).title
+                              }`}
+                              width={600}
+                              height={450}
+                              className="object-contain"
+                            />
+                          </div>
+                        )
                       ) : (
-                        <div className="relative w-full max-w-2xl h-80 md:h-96 flex items-center justify-center bg-gradient-to-br from-[#E3F2FD] to-[#F3E5F5] rounded-3xl shadow-xl border-4 border-[#B794F6]">
-                          <Image
-                            src={(currentItem as Lesson).mediaSrc}
-                            alt={`Sign language demonstration for ${(currentItem as Lesson).title}`}
-                            width={600}
-                            height={450}
-                            className="object-contain"
-                          />
+                        <div className="w-full max-w-2xl h-80 md:h-96 flex items-center justify-center bg-gradient-to-br from-[#E3F2FD] to-[#F3E5F5] rounded-3xl shadow-xl border-4 border-[#B794F6]">
+                          <p className="text-2xl text-gray-500">
+                            No media available
+                          </p>
                         </div>
                       )}
-                      
+
                       {/* Replay audio button */}
                       <button
                         onClick={() => {
                           announceButton("Replay lesson", "click");
                           const lessonItem = currentItem as Lesson;
-                          speakText(`${lessonItem.title}. ${lessonItem.description}`);
+                          speakText(
+                            `${lessonItem.title}. ${lessonItem.description}`
+                          );
                         }}
-                        onMouseEnter={() => announceButton("Replay lesson", "hover")}
+                        onMouseEnter={() =>
+                          announceButton("Replay lesson", "hover")
+                        }
                         onFocus={() => announceButton("Replay lesson", "focus")}
                         className="mt-6 flex items-center gap-3 px-8 py-4 bg-[#58C4F6] hover:bg-[#4ab3e6] text-white rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-[#58C4F6]/50"
                         aria-label="Replay lesson audio. Button."
                       >
                         <Volume2 className="w-8 h-8" />
-                        <span className="text-2xl font-bold font-[family-name:var(--font-fredoka)]">Play Audio</span>
+                        <span className="text-2xl font-bold font-[family-name:var(--font-fredoka)]">
+                          Play Audio
+                        </span>
                       </button>
                     </div>
 
@@ -384,8 +489,12 @@ export default function LessonPage() {
                       announceButton("Continue to next lesson", "click");
                       handleLessonComplete();
                     }}
-                    onMouseEnter={() => announceButton("Continue to next lesson", "hover")}
-                    onFocus={() => announceButton("Continue to next lesson", "focus")}
+                    onMouseEnter={() =>
+                      announceButton("Continue to next lesson", "hover")
+                    }
+                    onFocus={() =>
+                      announceButton("Continue to next lesson", "focus")
+                    }
                     size="xl"
                     variant="success"
                     className="animate-pulse-scale"
@@ -399,7 +508,11 @@ export default function LessonPage() {
 
             {/* Multiple Choice Test */}
             {displayMode === "multiple-choice-test" && (
-              <div className="space-y-8 animate-fade-in" role="article" aria-live="polite">
+              <div
+                className="space-y-8 animate-fade-in"
+                role="article"
+                aria-live="polite"
+              >
                 <Card className="bg-white rounded-[2.5rem] shadow-2xl border-4 border-[#FFD93D]">
                   <CardContent className="p-10 md:p-12">
                     {/* Media if available */}
@@ -424,7 +537,9 @@ export default function LessonPage() {
                         ) : (
                           <div className="relative w-full max-w-2xl h-80 md:h-96 flex items-center justify-center bg-gradient-to-br from-[#FFF9E6] to-[#FFE8CC] rounded-3xl shadow-xl border-4 border-[#FFD93D]">
                             <Image
-                              src={(currentItem as MultipleChoiceTest).mediaSrc!}
+                              src={
+                                (currentItem as MultipleChoiceTest).mediaSrc!
+                              }
                               alt="Quiz image question"
                               width={600}
                               height={450}
@@ -443,8 +558,12 @@ export default function LessonPage() {
                           const testItem = currentItem as MultipleChoiceTest;
                           speakText(`Quiz question: ${testItem.question}`);
                         }}
-                        onMouseEnter={() => announceButton("Replay question", "hover")}
-                        onFocus={() => announceButton("Replay question", "focus")}
+                        onMouseEnter={() =>
+                          announceButton("Replay question", "hover")
+                        }
+                        onFocus={() =>
+                          announceButton("Replay question", "focus")
+                        }
                         className="flex items-center justify-center w-20 h-20 rounded-full bg-[#58C4F6] hover:bg-[#4ab3e6] active:scale-95 transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#58C4F6]/50"
                         aria-label="Replay question audio. Button."
                       >
@@ -458,32 +577,60 @@ export default function LessonPage() {
                 </Card>
 
                 {/* Answer options - Colorful and large */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8" role="group" aria-label="Answer choices">
-                  {(currentItem as MultipleChoiceTest).options.map((option, index) => {
-                    const colors = [
-                      { bg: "bg-[#58C4F6]", hover: "hover:bg-[#4ab3e6]", border: "border-[#58C4F6]" },
-                      { bg: "bg-[#6BCF7F]", hover: "hover:bg-[#5abf6f]", border: "border-[#6BCF7F]" },
-                      { bg: "bg-[#FFD93D]", hover: "hover:bg-[#ffc933]", border: "border-[#FFD93D]" },
-                      { bg: "bg-[#B794F6]", hover: "hover:bg-[#a684e6]", border: "border-[#B794F6]" }
-                    ];
-                    const color = colors[index % colors.length];
-                    
-                    return (
-                      <button
-                        key={option}
-                        onClick={() => {
-                          announceButton(`Select answer ${option}`, "click");
-                          handleAnswerSelect(option);
-                        }}
-                        onMouseEnter={() => announceButton(`Answer option ${option}`, "hover")}
-                        onFocus={() => announceButton(`Answer option ${option}`, "focus")}
-                        className={`group relative p-8 md:p-10 ${color.bg} ${color.hover} text-white rounded-3xl text-2xl md:text-3xl font-bold transition-all transform hover:scale-105 active:scale-95 shadow-2xl hover:shadow-3xl border-4 ${color.border} focus:outline-none focus:ring-4 focus:ring-white/50`}
-                        aria-label={`Answer option: ${option}. Button.`}
-                      >
-                        <span className="relative z-10 font-[family-name:var(--font-fredoka)]">{option}</span>
-                      </button>
-                    );
-                  })}
+                <div
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8"
+                  role="group"
+                  aria-label="Answer choices"
+                >
+                  {(currentItem as MultipleChoiceTest).options.map(
+                    (option, index) => {
+                      const colors = [
+                        {
+                          bg: "bg-[#58C4F6]",
+                          hover: "hover:bg-[#4ab3e6]",
+                          border: "border-[#58C4F6]",
+                        },
+                        {
+                          bg: "bg-[#6BCF7F]",
+                          hover: "hover:bg-[#5abf6f]",
+                          border: "border-[#6BCF7F]",
+                        },
+                        {
+                          bg: "bg-[#FFD93D]",
+                          hover: "hover:bg-[#ffc933]",
+                          border: "border-[#FFD93D]",
+                        },
+                        {
+                          bg: "bg-[#B794F6]",
+                          hover: "hover:bg-[#a684e6]",
+                          border: "border-[#B794F6]",
+                        },
+                      ];
+                      const color = colors[index % colors.length];
+
+                      return (
+                        <button
+                          key={option}
+                          onClick={() => {
+                            announceButton(`Select answer ${option}`, "click");
+                            handleAnswerSelect(option);
+                          }}
+                          onMouseEnter={() =>
+                            announceButton(`Answer option ${option}`, "hover")
+                          }
+                          onFocus={() =>
+                            announceButton(`Answer option ${option}`, "focus")
+                          }
+                          className={`group relative p-8 md:p-10 ${color.bg} ${color.hover} text-white rounded-3xl text-2xl md:text-3xl font-bold transition-all transform hover:scale-105 active:scale-95 shadow-2xl hover:shadow-3xl border-4 ${color.border} focus:outline-none focus:ring-4 focus:ring-white/50`}
+                          aria-label={`Answer option: ${option}. Button.`}
+                        >
+                          <span className="relative z-10 font-[family-name:var(--font-fredoka)]">
+                            {option}
+                          </span>
+                        </button>
+                      );
+                    }
+                  )}
                 </div>
               </div>
             )}
@@ -495,6 +642,13 @@ export default function LessonPage() {
                   signToPerform={(currentItem as PracticalTest).signToPerform}
                   instructions={(currentItem as PracticalTest).instructions}
                   hints={(currentItem as PracticalTest).hints}
+                  referenceVideoUrl={
+                    (currentItem as PracticalTest).referenceVideoUrl
+                  }
+                  signImages={(currentItem as PracticalTest).signImages}
+                  signDescription={
+                    (currentItem as PracticalTest).signDescription
+                  }
                   onPass={handlePracticalTestPass}
                   onSkip={handlePracticalTestSkip}
                 />
@@ -514,17 +668,27 @@ export default function LessonPage() {
                         style={{
                           left: `${Math.random() * 100}%`,
                           top: `-${Math.random() * 20}%`,
-                          backgroundColor: ['#FFD93D', '#58C4F6', '#6BCF7F', '#B794F6', '#FF7B9C'][Math.floor(Math.random() * 5)],
+                          backgroundColor: [
+                            "#FFD93D",
+                            "#58C4F6",
+                            "#6BCF7F",
+                            "#B794F6",
+                            "#FF7B9C",
+                          ][Math.floor(Math.random() * 5)],
                           animationDelay: `${Math.random() * 2}s`,
                           animationDuration: `${3 + Math.random() * 2}s`,
-                          borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+                          borderRadius: Math.random() > 0.5 ? "50%" : "0%",
                         }}
                       />
                     ))}
                   </div>
                 )}
-                
-                <div className="text-center px-6 z-10" role="alert" aria-live="assertive">
+
+                <div
+                  className="text-center px-6 z-10"
+                  role="alert"
+                  aria-live="assertive"
+                >
                   <div className="animate-bounce-in">
                     <video
                       key={isCorrectAnswer ? "celebrate" : "sad"}
@@ -574,7 +738,11 @@ export default function LessonPage() {
 
             {/* Completed Screen */}
             {displayMode === "completed" && (
-              <div className="text-center text-white animate-fade-in" role="alert" aria-live="polite">
+              <div
+                className="text-center text-white animate-fade-in"
+                role="alert"
+                aria-live="polite"
+              >
                 {/* Confetti celebration */}
                 <div className="fixed inset-0 pointer-events-none z-0">
                   {[...Array(60)].map((_, i) => (
@@ -584,10 +752,16 @@ export default function LessonPage() {
                       style={{
                         left: `${Math.random() * 100}%`,
                         top: `-${Math.random() * 20}%`,
-                        backgroundColor: ['#FFD93D', '#58C4F6', '#6BCF7F', '#B794F6', '#FF7B9C'][Math.floor(Math.random() * 5)],
+                        backgroundColor: [
+                          "#FFD93D",
+                          "#58C4F6",
+                          "#6BCF7F",
+                          "#B794F6",
+                          "#FF7B9C",
+                        ][Math.floor(Math.random() * 5)],
                         animationDelay: `${Math.random() * 3}s`,
                         animationDuration: `${4 + Math.random() * 3}s`,
-                        borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+                        borderRadius: Math.random() > 0.5 ? "50%" : "0%",
                       }}
                     />
                   ))}
@@ -633,11 +807,24 @@ export default function LessonPage() {
                     <div className="flex flex-col sm:flex-row gap-6 justify-center">
                       <Button
                         onClick={() => {
-                          announceButton("Practice this category again", "click");
+                          announceButton(
+                            "Practice this category again",
+                            "click"
+                          );
                           handleRestart();
                         }}
-                        onMouseEnter={() => announceButton("Practice this category again", "hover")}
-                        onFocus={() => announceButton("Practice this category again", "focus")}
+                        onMouseEnter={() =>
+                          announceButton(
+                            "Practice this category again",
+                            "hover"
+                          )
+                        }
+                        onFocus={() =>
+                          announceButton(
+                            "Practice this category again",
+                            "focus"
+                          )
+                        }
                         size="xl"
                         variant="default"
                         aria-label="Practice this category again. Button."
@@ -649,8 +836,12 @@ export default function LessonPage() {
                           announceButton("Choose another category", "click");
                           handleBackToHome();
                         }}
-                        onMouseEnter={() => announceButton("Choose another category", "hover")}
-                        onFocus={() => announceButton("Choose another category", "focus")}
+                        onMouseEnter={() =>
+                          announceButton("Choose another category", "hover")
+                        }
+                        onFocus={() =>
+                          announceButton("Choose another category", "focus")
+                        }
                         size="xl"
                         variant="success"
                         aria-label="Go back to home and choose another category. Button."
@@ -668,4 +859,3 @@ export default function LessonPage() {
     </div>
   );
 }
-
