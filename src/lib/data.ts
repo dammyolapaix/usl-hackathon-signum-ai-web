@@ -121,9 +121,9 @@ export const lessonsData: Record<CategoryName, LessonItem[]> = {
       id: 8,
       type: "test",
       testType: "practical",
-      signToPerform: "Mother",
+      signToPerform: "Family",
       instructions:
-        "Show the sign for 'Mother' using your camera. Touch your thumb to your chin with your hand open.",
+        "Show the sign for 'Family' using your camera. Touch your thumb to your chin with your hand open.",
       hints: [
         "Make sure your hand is clearly visible",
         "Touch your thumb to your chin area",

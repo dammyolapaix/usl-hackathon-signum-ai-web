@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Video, VideoOff, CheckCircle, XCircle } from "lucide-react";
+import {
+  evaluateSignAction,
+  uploadVideoToCloudinary,
+  type UploadState,
+} from "@/lib/actions";
 
 interface CameraRecorderProps {
   signToPerform: string;
@@ -37,8 +42,7 @@ export default function CameraRecorder({
   onPass,
   onSkip,
 }: CameraRecorderProps) {
-  const [recordingState, setRecordingState] =
-    useState<RecordingState>("idle");
+  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [evaluationResult, setEvaluationResult] =
     useState<EvaluationResult | null>(null);
@@ -49,8 +53,19 @@ export default function CameraRecorder({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordedBlobRef = useRef<Blob | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // useActionState for upload and evaluation
+  const [uploadState, uploadAction, isUploading] = useActionState(
+    uploadVideoToCloudinary,
+    null
+  );
+  const [actionState, formAction, isPending] = useActionState(
+    evaluateSignAction,
+    null
+  );
 
   // Request camera permission and start stream
   const requestCamera = async () => {
@@ -78,10 +93,10 @@ export default function CameraRecorder({
 
   // Start countdown before recording
   const startCountdown = () => {
-    setCountdownValue(3);
+    setCountdownValue(5);
     setRecordingState("countdown");
 
-    let count = 3;
+    let count = 5;
     countdownTimerRef.current = setInterval(() => {
       count -= 1;
       setCountdownValue(count);
@@ -114,7 +129,19 @@ export default function CameraRecorder({
     mediaRecorder.onstop = () => {
       // Create blob from recorded chunks
       const blob = new Blob(chunksRef.current, { type: "video/webm" });
-      console.log("Recording saved:", blob.size, "bytes");
+      recordedBlobRef.current = blob;
+
+      // Log video size in different formats
+      const sizeInBytes = blob.size;
+      const sizeInKB = (sizeInBytes / 1024).toFixed(2);
+      const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+
+      console.log("📹 Video Recording Complete:");
+      console.log(`   Size: ${sizeInBytes} bytes`);
+      console.log(`   Size: ${sizeInKB} KB`);
+      console.log(`   Size: ${sizeInMB} MB`);
+      console.log(`   Type: ${blob.type}`);
+
       setRecordingState("recorded");
     };
 
@@ -127,9 +154,12 @@ export default function CameraRecorder({
     timerRef.current = setInterval(() => {
       setRecordingTime((prev) => {
         const newTime = prev + 1;
-        // Auto-stop at 15 seconds
-        if (newTime >= 15) {
-          if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        // Auto-stop at 5 seconds
+        if (newTime >= 5) {
+          if (
+            mediaRecorderRef.current &&
+            mediaRecorderRef.current.state === "recording"
+          ) {
             mediaRecorderRef.current.stop();
           }
           if (timerRef.current) {
@@ -143,7 +173,10 @@ export default function CameraRecorder({
 
   // Stop recording manually (not used for auto-stop)
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "recording"
+    ) {
       mediaRecorderRef.current.stop();
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -151,12 +184,51 @@ export default function CameraRecorder({
     }
   };
 
+  // Convert blob to base64
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        // Remove data URL prefix (e.g., "data:video/webm;base64,")
+        const base64Data = base64.split(",")[1];
+        resolve(base64Data);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   // Submit recording for evaluation
-  const submitRecording = () => {
+  const submitRecording = async () => {
+    if (!recordedBlobRef.current) return;
+
     setRecordingState("evaluating");
 
-    // Simulate AI evaluation with 70% success rate
-    setTimeout(() => {
+    try {
+      // Convert video blob to base64
+      const videoBase64 = await blobToBase64(recordedBlobRef.current);
+
+      // Log base64 size
+      const base64SizeInBytes = videoBase64.length;
+      const base64SizeInKB = (base64SizeInBytes / 1024).toFixed(2);
+      const base64SizeInMB = (base64SizeInBytes / (1024 * 1024)).toFixed(2);
+
+      console.log("📊 Base64 Conversion Complete:");
+      console.log(`   Base64 String Length: ${base64SizeInBytes} characters`);
+      console.log(`   Approximate Size: ${base64SizeInKB} KB`);
+      console.log(`   Approximate Size: ${base64SizeInMB} MB`);
+
+      // Step 1: Upload to Cloudinary
+      console.log("📤 Step 1: Uploading to Cloudinary...");
+      const uploadFormData = new FormData();
+      uploadFormData.append("videoBase64", videoBase64);
+
+      // Upload and wait for result via uploadState
+      uploadAction(uploadFormData);
+    } catch (error) {
+      console.error("Error evaluating sign:", error);
+      // Fallback to simulated evaluation
       const passed = Math.random() < 0.7;
       const randomHint = hints[Math.floor(Math.random() * hints.length)];
 
@@ -169,8 +241,105 @@ export default function CameraRecorder({
       });
 
       setRecordingState("result");
-    }, 2000); // 2 second evaluation delay
+    }
   };
+
+  // Handle upload completion and trigger evaluation
+  useEffect(() => {
+    if (
+      uploadState &&
+      "success" in uploadState &&
+      uploadState.success &&
+      recordingState === "evaluating"
+    ) {
+      console.log("✅ Upload complete, starting evaluation...");
+
+      // Step 2: Send URL to AI for evaluation
+      const evaluationFormData = new FormData();
+      evaluationFormData.append("videoUrl", uploadState.url);
+      evaluationFormData.append(
+        "signDescription",
+        `${signToPerform}: ${instructions}`
+      );
+
+      console.log("🚀 Sending to AI for evaluation...");
+      formAction(evaluationFormData);
+    } else if (uploadState && "error" in uploadState && uploadState.error) {
+      console.error("❌ Upload failed:", uploadState.error);
+      // Fallback to simulated evaluation
+      const passed = Math.random() < 0.7;
+      const randomHint = hints[Math.floor(Math.random() * hints.length)];
+
+      setEvaluationResult({
+        passed,
+        feedback: passed
+          ? `Excellent work! Your sign for "${signToPerform}" is accurate.`
+          : `Not quite right. Let's try again!`,
+        hint: passed ? undefined : randomHint,
+      });
+
+      setRecordingState("result");
+    }
+  }, [
+    uploadState,
+    recordingState,
+    signToPerform,
+    instructions,
+    formAction,
+    hints,
+  ]);
+
+  // Process action result when it changes
+  useEffect(() => {
+    if (actionState && recordingState === "evaluating") {
+      console.log("✅ AI Evaluation Received:");
+      console.log(
+        `   Response: ${actionState.substring(0, 100)}${
+          actionState.length > 100 ? "..." : ""
+        }`
+      );
+      console.log(`   Full length: ${actionState.length} characters`);
+
+      // Parse the AI response
+      const positiveWords = [
+        "correct",
+        "great",
+        "excellent",
+        "good",
+        "accurate",
+        "right",
+        "perfect",
+      ];
+      const negativeWords = [
+        "incorrect",
+        "wrong",
+        "try again",
+        "not quite",
+        "needs improvement",
+      ];
+
+      const resultText = actionState.toLowerCase();
+      const hasPositive = positiveWords.some((word) =>
+        resultText.includes(word)
+      );
+      const hasNegative = negativeWords.some((word) =>
+        resultText.includes(word)
+      );
+
+      const passed = hasPositive && !hasNegative;
+      const randomHint = hints[Math.floor(Math.random() * hints.length)];
+
+      console.log(`   Evaluation: ${passed ? "✅ PASSED" : "❌ FAILED"}`);
+
+      setEvaluationResult({
+        passed,
+        feedback: actionState,
+        hint: passed ? undefined : randomHint,
+      });
+
+      setRecordingState("result");
+    }
+  }, [actionState, recordingState, hints]);
 
   // Try again
   const tryAgain = () => {
@@ -276,7 +445,9 @@ export default function CameraRecorder({
                 {recordingState === "recording" && (
                   <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-full animate-pulse">
                     <div className="w-3 h-3 bg-white rounded-full" />
-                    <span className="font-bold">{formatTime(recordingTime)} / 15s</span>
+                    <span className="font-bold">
+                      {formatTime(recordingTime)} / 3s
+                    </span>
                   </div>
                 )}
               </>
@@ -332,24 +503,24 @@ export default function CameraRecorder({
               <Camera className="mr-2 h-5 w-5" />
               Start Camera
             </Button>
-            <Button
-              onClick={handleSkip}
-              variant="outline"
-              size="lg"
-            >
+            <Button onClick={handleSkip} variant="outline" size="lg">
               Skip to Next Lesson
             </Button>
           </>
         )}
 
         {(recordingState === "requesting-permission" ||
-          recordingState === "evaluating") && (
+          recordingState === "evaluating" ||
+          isUploading ||
+          isPending) && (
           <div className="flex items-center gap-2 text-white">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
             <span>
               {recordingState === "requesting-permission"
                 ? "Requesting camera access..."
-                : "Evaluating your sign..."}
+                : isUploading
+                ? "Uploading video to cloud..."
+                : "Evaluating your sign with AI..."}
             </span>
           </div>
         )}
@@ -364,11 +535,7 @@ export default function CameraRecorder({
               <Video className="mr-2 h-5 w-5" />
               Start Recording
             </Button>
-            <Button
-              onClick={handleSkip}
-              variant="outline"
-              size="lg"
-            >
+            <Button onClick={handleSkip} variant="outline" size="lg">
               Skip to Next Lesson
             </Button>
           </>
@@ -380,7 +547,7 @@ export default function CameraRecorder({
             <span>
               {recordingState === "countdown"
                 ? `Get ready... ${countdownValue}`
-                : `Recording... ${formatTime(recordingTime)}s / 15s`}
+                : `Recording... ${formatTime(recordingTime)}s / 3s`}
             </span>
           </div>
         )}
@@ -394,11 +561,7 @@ export default function CameraRecorder({
             >
               Submit for Evaluation
             </Button>
-            <Button
-              onClick={tryAgain}
-              variant="outline"
-              size="lg"
-            >
+            <Button onClick={tryAgain} variant="outline" size="lg">
               Record Again
             </Button>
           </>
@@ -424,11 +587,7 @@ export default function CameraRecorder({
                 >
                   Try Again
                 </Button>
-                <Button
-                  onClick={handleSkip}
-                  variant="outline"
-                  size="lg"
-                >
+                <Button onClick={handleSkip} variant="outline" size="lg">
                   Skip to Next Lesson
                 </Button>
               </>
@@ -457,4 +616,3 @@ export default function CameraRecorder({
     </div>
   );
 }
-
