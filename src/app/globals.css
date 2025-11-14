@@ -6,8 +6,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-baloo);
+  --font-heading: var(--font-fredoka);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -44,38 +44,66 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Playful, child-friendly color palette */
+  --radius: 1.5rem; /* More rounded for friendly feel */
+  
+  /* Main colors */
+  --background: #FFF9E6; /* Soft cream */
+  --foreground: #2D3748; /* High contrast dark */
+  
+  /* Primary - Bright sky blue */
+  --primary: #58C4F6;
+  --primary-foreground: #FFFFFF;
+  
+  /* Secondary - Sunny yellow */
+  --secondary: #FFD93D;
+  --secondary-foreground: #2D3748;
+  
+  /* Success - Happy green */
+  --success: #6BCF7F;
+  --success-foreground: #FFFFFF;
+  
+  /* Card colors */
+  --card: #FFFFFF;
+  --card-foreground: #2D3748;
+  
+  /* Popover colors */
+  --popover: #FFFFFF;
+  --popover-foreground: #2D3748;
+  
+  /* Muted colors */
+  --muted: #F7FAFC;
+  --muted-foreground: #718096;
+  
+  /* Accent - Playful purple */
+  --accent: #B794F6;
+  --accent-foreground: #FFFFFF;
+  
+  /* Coral accent */
+  --coral: #FF7B9C;
+  --coral-foreground: #FFFFFF;
+  
+  /* Destructive/Error - Soft, not scary */
+  --destructive: #FC8181;
+  --destructive-foreground: #FFFFFF;
+  
+  /* Borders and inputs */
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #58C4F6;
+  
+  /* Chart colors - bright and playful */
+  --chart-1: #58C4F6; /* Sky blue */
+  --chart-2: #FFD93D; /* Yellow */
+  --chart-3: #6BCF7F; /* Green */
+  --chart-4: #B794F6; /* Purple */
+  --chart-5: #FF7B9C; /* Coral */
+  
+  /* Progress colors */
+  --progress-red: #DC143C;
+  --progress-yellow: #FFD700;
+  --progress-green: #228B22;
+  --progress-black: #000000;
 }
 
 .dark {
@@ -159,6 +187,56 @@
   }
 }
 
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(-100%) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: -200%;
+  }
+  100% {
+    background-position: 200%;
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
@@ -169,4 +247,31 @@
 
 .animate-slide-up {
   animation: slide-up 0.5s ease-out;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+.animate-pulse-scale {
+  animation: pulse-scale 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-confetti {
+  animation: confetti 3s linear forwards;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

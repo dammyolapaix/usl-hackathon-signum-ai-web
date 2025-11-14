@@ -11,6 +11,7 @@ export const categories = [
 export type CategoryName = (typeof categories)[number]["name"];
 
 // Lesson and test type definitions
+// Note: We use browser's speech synthesis instead of audio files for accessibility
 export interface Lesson {
   id: number;
   type: "lesson";

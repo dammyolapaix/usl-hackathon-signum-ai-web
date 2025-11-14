@@ -392,21 +392,24 @@ export default function CameraRecorder({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-8">
       {/* Instructions Card */}
-      <Card className="bg-white/95 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="text-4xl">📹</div>
+      <Card className="bg-white border-4 border-[#58C4F6]">
+        <CardContent className="p-8 md:p-10">
+          <div className="flex items-start gap-6">
+            <div className="text-7xl md:text-8xl">📹</div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
+              <h3 className="text-3xl md:text-4xl font-bold text-[#2D3748] mb-4 font-[family-name:var(--font-fredoka)]">
                 Practical Test: {signToPerform}
               </h3>
-              <p className="text-gray-700 mb-3">{instructions}</p>
+              <p className="text-xl md:text-2xl text-gray-700 mb-4 leading-relaxed">
+                {instructions}
+              </p>
               {evaluationResult?.hint && (
-                <Alert className="bg-blue-50 border-blue-200">
-                  <AlertDescription className="text-blue-900">
-                    <strong>Hint:</strong> {evaluationResult.hint}
+                <Alert className="bg-[#FFD93D]/20 border-4 border-[#FFD93D] mt-4">
+                  <AlertDescription className="text-[#2D3748] text-lg md:text-xl">
+                    <strong className="font-bold">💡 Hint:</strong>{" "}
+                    {evaluationResult.hint}
                   </AlertDescription>
                 </Alert>
               )}
@@ -416,13 +419,13 @@ export default function CameraRecorder({
       </Card>
 
       {/* Camera Display */}
-      <Card className="bg-gray-900">
+      <Card className="bg-gray-900 border-4 border-[#B794F6]">
         <CardContent className="p-0">
-          <div className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden">
+          <div className="relative aspect-video bg-gray-800 rounded-3xl overflow-hidden">
             {recordingState === "idle" ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                <Camera className="w-16 h-16 mb-4 opacity-50" />
-                <p className="text-lg">Camera not active</p>
+                <Camera className="w-24 h-24 mb-6 opacity-50" />
+                <p className="text-2xl font-semibold">Camera not active</p>
               </div>
             ) : (
               <>
@@ -432,20 +435,21 @@ export default function CameraRecorder({
                   playsInline
                   muted
                   className="w-full h-full object-cover"
+                  aria-label="Camera preview"
                 />
                 {/* Countdown overlay */}
                 {recordingState === "countdown" && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                    <div className="text-white text-9xl font-bold animate-pulse">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                    <div className="text-white text-[12rem] md:text-[15rem] font-bold animate-pulse font-[family-name:var(--font-fredoka)] drop-shadow-2xl">
                       {countdownValue}
                     </div>
                   </div>
                 )}
                 {/* Recording indicator */}
                 {recordingState === "recording" && (
-                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-full animate-pulse">
-                    <div className="w-3 h-3 bg-white rounded-full" />
-                    <span className="font-bold">
+                  <div className="absolute top-6 right-6 flex items-center gap-3 bg-red-500 text-white px-6 py-3 rounded-full animate-pulse shadow-lg">
+                    <div className="w-5 h-5 bg-white rounded-full" />
+                    <span className="font-bold text-xl font-[family-name:var(--font-fredoka)]">
                       {formatTime(recordingTime)} / 3s
                     </span>
                   </div>
@@ -458,11 +462,11 @@ export default function CameraRecorder({
 
       {/* Permission Denied Alert */}
       {permissionDenied && (
-        <Alert className="bg-red-50 border-red-200">
-          <XCircle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-900">
+        <Alert className="bg-red-50 border-4 border-red-400 p-6">
+          <XCircle className="h-10 w-10 text-red-600" />
+          <AlertDescription className="text-red-900 text-xl md:text-2xl ml-4">
             Camera permission denied. Please allow camera access to continue
-            with the practical test.
+            with the practical test. 📸
           </AlertDescription>
         </Alert>
       )}
@@ -472,19 +476,19 @@ export default function CameraRecorder({
         <Alert
           className={
             evaluationResult.passed
-              ? "bg-green-50 border-green-200"
-              : "bg-yellow-50 border-yellow-200"
+              ? "bg-[#6BCF7F]/20 border-4 border-[#6BCF7F] p-8"
+              : "bg-[#FFD93D]/20 border-4 border-[#FFD93D] p-8"
           }
         >
           {evaluationResult.passed ? (
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="h-12 w-12 text-[#6BCF7F]" />
           ) : (
-            <XCircle className="h-4 w-4 text-yellow-600" />
+            <XCircle className="h-12 w-12 text-[#FFD93D]" />
           )}
           <AlertDescription
-            className={
-              evaluationResult.passed ? "text-green-900" : "text-yellow-900"
-            }
+            className={`${
+              evaluationResult.passed ? "text-[#2D3748]" : "text-[#2D3748]"
+            } text-2xl md:text-3xl font-semibold ml-4`}
           >
             {evaluationResult.feedback}
           </AlertDescription>
@@ -492,19 +496,25 @@ export default function CameraRecorder({
       )}
 
       {/* Control Buttons */}
-      <div className="flex flex-wrap gap-3 justify-center">
+      <div className="flex flex-wrap gap-6 justify-center">
         {recordingState === "idle" && (
           <>
             <Button
               onClick={requestCamera}
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700"
+              size="xl"
+              variant="default"
+              aria-label="Start camera for recording"
             >
-              <Camera className="mr-2 h-5 w-5" />
-              Start Camera
+              <Camera className="mr-3 h-8 w-8" />
+              Start Camera 📹
             </Button>
-            <Button onClick={handleSkip} variant="outline" size="lg">
-              Skip to Next Lesson
+            <Button
+              onClick={handleSkip}
+              variant="outline"
+              size="xl"
+              aria-label="Skip to next lesson"
+            >
+              Skip ⏭️
             </Button>
           </>
         )}
@@ -513,14 +523,14 @@ export default function CameraRecorder({
           recordingState === "evaluating" ||
           isUploading ||
           isPending) && (
-          <div className="flex items-center gap-2 text-white">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
-            <span>
+          <div className="flex items-center gap-4 text-[#2D3748] bg-white px-8 py-6 rounded-full shadow-lg">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-[#58C4F6]" />
+            <span className="text-2xl font-semibold font-[family-name:var(--font-fredoka)]">
               {recordingState === "requesting-permission"
-                ? "Requesting camera access..."
+                ? "Requesting camera... 📸"
                 : isUploading
-                ? "Uploading video to cloud..."
-                : "Evaluating your sign with AI..."}
+                ? "Uploading video... ☁️"
+                : "Evaluating... 🤖"}
             </span>
           </div>
         )}
@@ -529,25 +539,31 @@ export default function CameraRecorder({
           <>
             <Button
               onClick={startCountdown}
-              size="lg"
-              className="bg-red-600 hover:bg-red-700"
+              size="xl"
+              className="bg-[#FF7B9C] hover:bg-[#ff6b8c] text-white"
+              aria-label="Start recording"
             >
-              <Video className="mr-2 h-5 w-5" />
-              Start Recording
+              <Video className="mr-3 h-8 w-8" />
+              Start Recording 🎬
             </Button>
-            <Button onClick={handleSkip} variant="outline" size="lg">
-              Skip to Next Lesson
+            <Button
+              onClick={handleSkip}
+              variant="outline"
+              size="xl"
+              aria-label="Skip to next lesson"
+            >
+              Skip ⏭️
             </Button>
           </>
         )}
 
         {(recordingState === "countdown" || recordingState === "recording") && (
-          <div className="flex items-center gap-2 text-white">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
-            <span>
+          <div className="flex items-center gap-4 text-white bg-gradient-to-r from-[#FF7B9C] to-[#B794F6] px-8 py-6 rounded-full shadow-lg">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-white" />
+            <span className="text-2xl font-bold font-[family-name:var(--font-fredoka)]">
               {recordingState === "countdown"
-                ? `Get ready... ${countdownValue}`
-                : `Recording... ${formatTime(recordingTime)}s / 3s`}
+                ? `Get ready... ${countdownValue} 🎬`
+                : `Recording... ${formatTime(recordingTime)}s / 3s ⏺️`}
             </span>
           </div>
         )}
@@ -556,13 +572,19 @@ export default function CameraRecorder({
           <>
             <Button
               onClick={submitRecording}
-              size="lg"
-              className="bg-green-600 hover:bg-green-700"
+              size="xl"
+              variant="success"
+              aria-label="Submit recording for evaluation"
             >
-              Submit for Evaluation
+              Submit ✅
             </Button>
-            <Button onClick={tryAgain} variant="outline" size="lg">
-              Record Again
+            <Button
+              onClick={tryAgain}
+              variant="outline"
+              size="xl"
+              aria-label="Record again"
+            >
+              Record Again 🔄
             </Button>
           </>
         )}
@@ -572,23 +594,30 @@ export default function CameraRecorder({
             {evaluationResult.passed ? (
               <Button
                 onClick={handlePass}
-                size="lg"
-                className="bg-green-600 hover:bg-green-700"
+                size="xl"
+                variant="success"
+                aria-label="Continue to next lesson"
               >
-                <CheckCircle className="mr-2 h-5 w-5" />
-                Continue to Next Lesson
+                <CheckCircle className="mr-3 h-8 w-8" />
+                Continue 🎉
               </Button>
             ) : (
               <>
                 <Button
                   onClick={tryAgain}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700"
+                  size="xl"
+                  variant="default"
+                  aria-label="Try again"
                 >
-                  Try Again
+                  Try Again 💪
                 </Button>
-                <Button onClick={handleSkip} variant="outline" size="lg">
-                  Skip to Next Lesson
+                <Button
+                  onClick={handleSkip}
+                  variant="outline"
+                  size="xl"
+                  aria-label="Skip to next lesson"
+                >
+                  Skip ⏭️
                 </Button>
               </>
             )}
@@ -600,14 +629,17 @@ export default function CameraRecorder({
       {recordingState !== "idle" &&
         recordingState !== "result" &&
         hints.length > 0 && (
-          <Card className="bg-blue-50">
-            <CardContent className="p-4">
-              <h4 className="font-semibold text-blue-900 mb-2">
-                Tips for Success:
+          <Card className="bg-[#58C4F6]/10 border-4 border-[#58C4F6]">
+            <CardContent className="p-8">
+              <h4 className="font-bold text-[#2D3748] mb-4 text-2xl md:text-3xl font-[family-name:var(--font-fredoka)]">
+                💡 Tips for Success:
               </h4>
-              <ul className="list-disc list-inside space-y-1 text-blue-800 text-sm">
+              <ul className="list-none space-y-3 text-[#2D3748] text-xl md:text-2xl">
                 {hints.map((hint, index) => (
-                  <li key={index}>{hint}</li>
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="text-2xl">✨</span>
+                    <span>{hint}</span>
+                  </li>
                 ))}
               </ul>
             </CardContent>
